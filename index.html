@@ -7,36 +7,59 @@
     <title>Document</title>
 </head>
 <body>
-    <form>
+    <form id="form">
         <label for="">Choose expense amount
-            <input type="number" value="">
+            <input class="input" name="amount"  type="range" min="0" max="5000"  value="">
         </label>
         <label for="">Choose description
-            <input type="text" value="">
+            <input  class="input" name="description"  type="text" value="">
         </label>
         <label for="">Choose a category
-            <select type="text"  >
-                <option>main</option>
-                <option>sub</option>
+            <select  class="input" name="category" type="text" value="">
+                <option value="main">main</option>
+                <option value="sub">sub</option>
             </select>
         </label>
+            
     </form>
-    <button type="submit" id="add">Add expense</button>
-    <div>
-        <div id="table">
-
-        </div>
+    <button value="Add Expense" id="submit">Add expense</button>
+    <div id="table">
     </div>
 </body>
 <script>
-    let info=document.querySelectorAll("input")
-    function addInfo(){
-        info.forEach(e=>{
-            let p=document.createElement("p")
-            p.textContent=e.value
-            document.getElementById("table").appendChild(p)
+    function addData(items){
+         items.forEach(obj=> {
+            let newExp=document.createElement("div")
+            newExp.textContent=`${obj.amount}-${obj.description}-${obj.category}`
+            
+            newExp.classList.add("per-user-exp")
+        let t=document.getElementById("table")
+        t.appendChild(newExp)
+        let editBtn=document.createElement("button")
+            editBtn.textContent="Edit"
+            let deleteBtn=document.createElement("button")
+            deleteBtn.textContent="Delete"
+            t.appendChild(editBtn)
+            t.appendChild(deleteBtn)
         })
     }
-let btn=document.getElementById("add").addEventListener("click",addInfo)
+    let stuff=[]
+    for (let i = 0; i<localStorage.length; i++) {
+            stuff[i] = JSON.parse(localStorage.getItem(localStorage.key(i)));
+        }
+        stuff.forEach(e=>addData(e))
+    function addInfo(){
+        let count=Math.random();
+        let expense=Array.from(document.querySelectorAll(".input")).reduce((obj,e)=>{
+           return {...obj,[e.name]:e.value}
+        },{})
+            localStorage.setItem(`expenses${count}`,JSON.stringify([expense]))
+        let items=Array.from(JSON.parse(localStorage.getItem(`expenses${count}`)))
+        console.log(JSON.parse(localStorage.getItem(`expenses${count}`)))
+        
+    addData(items)
+    }
+        document.getElementById("submit").addEventListener("click",addInfo)
+
 </script>
 </html>
