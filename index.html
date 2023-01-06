@@ -27,38 +27,80 @@
     </div>
 </body>
 <script>
+    function deleteNode(){
+        let div= event.target.parentNode
+        let removedData=[]
+        removedData.push(div.childNodes[0].textContent.split("-").reduce((obj,e,i)=>{
+                 switch(i){
+                    case 0:obj={...obj,amount:e}
+                    break;
+                    case 1:obj={...obj,description:e}
+                    break;
+                    case 2:obj={...obj,category:e}
+                 }
+                 return obj
+        },{}))
+        let stuff=[]
+    for (let i = 0; i<localStorage.length; i++) {
+        stuff[i] = JSON.parse(localStorage.getItem(localStorage.key(i)));
+        }
+        stuff=stuff.filter(e=>{
+            if(!(e[0].amount==removedData[0].amount&&
+            e[0].description==removedData[0].description&&
+            e[0].category==removedData[0].category)){
+                return e
+            }
+        })
+        localStorage.clear()
+        for(let i=0;i<stuff.length;i++){
+        localStorage.setItem(`expenses${Math.random()}`,JSON.stringify(stuff[i]))
+        }
+        div.parentNode.removeChild(div)
+    }
+    function editNode(){
+        console.log(event.target.parentNode)
+        
+    }
+    // create function to append items to front page
     function addData(items){
          items.forEach(obj=> {
             let newExp=document.createElement("div")
             newExp.textContent=`${obj.amount}-${obj.description}-${obj.category}`
-            
             newExp.classList.add("per-user-exp")
         let t=document.getElementById("table")
         t.appendChild(newExp)
+        // create edit and delete button
         let editBtn=document.createElement("button")
             editBtn.textContent="Edit"
             let deleteBtn=document.createElement("button")
             deleteBtn.textContent="Delete"
-            t.appendChild(editBtn)
-            t.appendChild(deleteBtn)
+            deleteBtn.addEventListener("click",deleteNode)
+            editBtn.addEventListener("click",editNode)
+            // attach event listener to button to call function edit and delete
+            newExp.appendChild(editBtn)
+            newExp.appendChild(deleteBtn)
         })
     }
+    // retrieve data from local storage when you open page
     let stuff=[]
     for (let i = 0; i<localStorage.length; i++) {
-            stuff[i] = JSON.parse(localStorage.getItem(localStorage.key(i)));
+        stuff[i] = JSON.parse(localStorage.getItem(localStorage.key(i)));
         }
+        // add that data to front page by calling function addData that you declared above
         stuff.forEach(e=>addData(e))
+
+// set data from input to local storage, call function addData to retrieve this data and add this to front page
     function addInfo(){
-        let count=Math.random();
+        let count=Math.random()
         let expense=Array.from(document.querySelectorAll(".input")).reduce((obj,e)=>{
            return {...obj,[e.name]:e.value}
         },{})
-            localStorage.setItem(`expenses${count}`,JSON.stringify([expense]))
+        localStorage.setItem(`expenses${count}`,JSON.stringify([expense]))
         let items=Array.from(JSON.parse(localStorage.getItem(`expenses${count}`)))
-        console.log(JSON.parse(localStorage.getItem(`expenses${count}`)))
         
     addData(items)
     }
+    // attach event listener to submit button to call function addinfo
         document.getElementById("submit").addEventListener("click",addInfo)
 
 </script>
