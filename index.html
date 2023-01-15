@@ -1,107 +1,148 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Document</title>
-</head>
-<body>
-    <form id="form">
-        <label for="">Choose expense amount
-            <input class="input" name="amount"  type="range" min="0" max="5000"  value="">
-        </label>
-        <label for="">Choose description
-            <input  class="input" name="description"  type="text" value="">
-        </label>
-        <label for="">Choose a category
-            <select  class="input" name="category" type="text" value="">
-                <option value="main">main</option>
-                <option value="sub">sub</option>
+  </head>
+  <body>
+    <div class="container">
+      <div class="row">
+        <form id="form">
+          <label for=""
+            >Choose expense amount
+            <select class="input" id="amount" name="amount">
+              <option value="100">100</option>
+              <option value="200">200</option>
+              <option value="300">300</option>
+              <option value="400">400</option>
+              <option value="500">500</option>
             </select>
-        </label>
-            
-    </form>
-    <button value="Add Expense" id="submit">Add expense</button>
-    <div id="table">
+          </label>
+          <label for=""
+            >Choose description
+            <input
+              class="input"
+              id="description"
+              name="description"
+              type="text"
+              value=""
+            />
+          </label>
+          <label for=""
+            >Choose a category
+            <select
+              class="input"
+              id="category"
+              name="category"
+              type="text"
+              value=""
+            >
+              <option value="main">main</option>
+              <option value="sub">sub</option>
+            </select>
+          </label>
+        </form>
+        <button id="submit" onclick="post_expense()">Add Expense</button>
+      </div>
+      <div class="row"></div>
+      <ul id="items"></ul>
     </div>
-</body>
-<script>
-    function deleteNode(){
-        let div= event.target.parentNode
-        let removedData=[]
-        removedData.push(div.childNodes[0].textContent.split("-").reduce((obj,e,i)=>{
-                 switch(i){
-                    case 0:obj={...obj,amount:e}
-                    break;
-                    case 1:obj={...obj,description:e}
-                    break;
-                    case 2:obj={...obj,category:e}
-                 }
-                 return obj
-        },{}))
-        let stuff=[]
-    for (let i = 0; i<localStorage.length; i++) {
-        stuff[i] = JSON.parse(localStorage.getItem(localStorage.key(i)));
+  </body>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.19.0/axios.min.js"></script>
+  <script>
+    let item_list = document.getElementById("items");
+    let update_item_id = null;
+    (async function () {
+      try {
+        let res = await axios.get(
+          "https://crudcrud.com/api/9a48d5e36bb64815901abe27853b9942/expensetracker"
+        );
+        show_expense(res.data);
+      } catch (e) {
+        console.log(e);
+      }
+    })();
+    function post_expense() {
+      let expense_details = {};
+      let all_inputs = Array.from(document.getElementsByClassName("input"));
+      all_inputs.forEach(
+        (element) =>
+          (expense_details = {
+            ...expense_details,
+            [element.name]: element.value,
+          })
+      );
+      if (!update_item_id) {
+        (async function () {
+          try {
+            let res = await axios.post(
+              "https://crudcrud.com/api/9a48d5e36bb64815901abe27853b9942/expensetracker",
+              expense_details
+            );
+            show_expense([res.data]);
+          } catch (e) {
+            console.log(e);
+          }
+        })();
+      } else {
+        (async function () {
+          try {
+            await axios.put(
+              `https://crudcrud.com/api/9a48d5e36bb64815901abe27853b9942/expensetracker/${update_item_id}`,
+              expense_details
+            );
+            let res = await axios.get(
+              `https://crudcrud.com/api/9a48d5e36bb64815901abe27853b9942/expensetracker/${update_item_id}`
+            );
+            show_expense([res.data]);
+            update_item_id = null;
+          } catch (e) {
+            console.log(e);
+          }
+        })();
+      }
+    }
+    function show_expense(arr) {
+      arr.forEach((obj) => {
+        let item = document.createElement("li");
+        item.setAttribute("id", `${obj._id}`);
+        let delete_btn = document.createElement("button");
+        let edit_btn = document.createElement("button");
+        item.textContent = `${obj.amount}-${obj.description}-${obj.category}`;
+        delete_btn.textContent = "Delete";
+        edit_btn.textContent = "Edit";
+        delete_btn.addEventListener("click", delete_expense);
+        edit_btn.addEventListener("click", edit_expense);
+        item_list.appendChild(item);
+        item.appendChild(delete_btn);
+        item.appendChild(edit_btn);
+      });
+    }
+    function delete_expense(e) {
+      axios.delete(
+        `https://crudcrud.com/api/9a48d5e36bb64815901abe27853b9942/expensetracker/${e.target.parentNode.id}`
+      );
+      e.target.parentNode.remove();
+    }
+    function edit_expense(e) {
+      (async function () {
+        try {
+          let res = await axios.get(
+            `https://crudcrud.com/api/9a48d5e36bb64815901abe27853b9942/expensetracker/${e.target.parentNode.id}`
+          );
+          Object.keys(res.data).forEach((key) =>
+            key != "_id"
+              ? (document.getElementById(`${key}`).value = res.data[`${key}`])
+              : ""
+          );
+          update_item_id = e.target.parentNode.id;
+          e.target.parentNode.remove();
+        } catch (e) {
+          console.log(e);
         }
-        stuff=stuff.filter(e=>{
-            if(!(e[0].amount==removedData[0].amount&&
-            e[0].description==removedData[0].description&&
-            e[0].category==removedData[0].category)){
-                return e
-            }
-        })
-        localStorage.clear()
-        for(let i=0;i<stuff.length;i++){
-        localStorage.setItem(`expenses${Math.random()}`,JSON.stringify(stuff[i]))
-        }
-        div.parentNode.removeChild(div)
+      })();
     }
-    function editNode(){
-        console.log(event.target.parentNode)
-        
-    }
-    // create function to append items to front page
-    function addData(items){
-         items.forEach(obj=> {
-            let newExp=document.createElement("div")
-            newExp.textContent=`${obj.amount}-${obj.description}-${obj.category}`
-            newExp.classList.add("per-user-exp")
-        let t=document.getElementById("table")
-        t.appendChild(newExp)
-        // create edit and delete button
-        let editBtn=document.createElement("button")
-            editBtn.textContent="Edit"
-            let deleteBtn=document.createElement("button")
-            deleteBtn.textContent="Delete"
-            deleteBtn.addEventListener("click",deleteNode)
-            editBtn.addEventListener("click",editNode)
-            // attach event listener to button to call function edit and delete
-            newExp.appendChild(editBtn)
-            newExp.appendChild(deleteBtn)
-        })
-    }
-    // retrieve data from local storage when you open page
-    let stuff=[]
-    for (let i = 0; i<localStorage.length; i++) {
-        stuff[i] = JSON.parse(localStorage.getItem(localStorage.key(i)));
-        }
-        // add that data to front page by calling function addData that you declared above
-        stuff.forEach(e=>addData(e))
-
-// set data from input to local storage, call function addData to retrieve this data and add this to front page
-    function addInfo(){
-        let count=Math.random()
-        let expense=Array.from(document.querySelectorAll(".input")).reduce((obj,e)=>{
-           return {...obj,[e.name]:e.value}
-        },{})
-        localStorage.setItem(`expenses${count}`,JSON.stringify([expense]))
-        let items=Array.from(JSON.parse(localStorage.getItem(`expenses${count}`)))
-        
-    addData(items)
-    }
-    // attach event listener to submit button to call function addinfo
-        document.getElementById("submit").addEventListener("click",addInfo)
-
-</script>
+  </script>
 </html>
