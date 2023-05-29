@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ExpenseTracker</title>
+  </head>
+  <body>
+    <div class="container">
+      <div class="row">
+        <form id="form">
+          <label
+            >Choose expense amount
+            <select class="input" id="amount" name="amount">
+              <option value="100">100</option>
+              <option value="200">200</option>
+              <option value="300">300</option>
+              <option value="400">400</option>
+              <option value="500">500</option>
+            </select>
+          </label>
+          <label
+            >Choose description
+            <input
+              class="input"
+              id="description"
+              name="description"
+              type="text"
+              value=""
+            />
+          </label>
+          <label
+            >Choose a category
+            <select
+              class="input"
+              id="category"
+              name="category"
+              type="text"
+              value=""
+            >
+              <option value="main">main</option>
+              <option value="sub">sub</option>
+            </select>
+          </label>
+        </form>
+        <button id="submit" onclick="post_expense()">Add Expense</button>
+      </div>
+      <div class="row"></div>
+      <ul id="items"></ul>
+    </div>
+  </body>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.19.0/axios.min.js"></script>
+  <script>
+    let item_list = document.getElementById("items");
+    let update_item_id = null;
+    const api = "/expenses";
+
+    get_Data();
+
+    function get_Data() {
+      axios
+        .get(`${api}`)
+        .then((res) => show_expense(res.data))
+        .catch((e) => console.log(e));
+    }
+
+    function post_expense() {
+      const amount = document.getElementById("amount").value;
+      const description = document.getElementById("description").value;
+      const category = document.getElementById("category").value;
+      let expense_details = {
+        amount,
+        description,
+        category,
+      };
+      if (!update_item_id) {
+        axios
+          .post(`${api}`, expense_details)
+          .then((res) => show_expense([res.data]))
+          .catch((e) => console.log(e));
+      } else {
+        axios
+          .put(`${api}/${update_item_id}`, expense_details)
+          .then((res) => update_expense(res.data[0]))
+          .catch((e) => console.log(e));
+      }
+    }
+
+    function show_expense(arr) {
+      if (arr.length === 0) {
+        item_list.textContent = "no expenses";
+      } else {
+        item_list.textContent = "";
+        arr.forEach((obj) => {
+          let item = document.createElement("li");
+          item.setAttribute("id", `${obj.id}`);
+          let delete_btn = document.createElement("button");
+          let edit_btn = document.createElement("button");
+          item.textContent = `${obj.amount}-${obj.description}-${obj.category}`;
+          delete_btn.textContent = "Delete";
+          edit_btn.textContent = "Edit";
+          delete_btn.addEventListener("click", () =>
+            delete_expense(`${obj.id}`)
+          );
+          edit_btn.addEventListener("click", () => edit_expense(`${obj.id}`));
+          item_list.appendChild(item);
+          item.appendChild(delete_btn);
+          item.appendChild(edit_btn);
+        });
+      }
+    }
+
+    function edit_expense(id) {
+      update_item_id = id;
+      const amount = document.getElementById("amount");
+      const description = document.getElementById("description");
+      const category = document.getElementById("category");
+      axios
+        .get(`${api}/${id}`)
+        .then((res) => {
+          amount.value = res.data.amount;
+          description.value = res.data.description;
+          category.value = res.data.category;
+        })
+        .catch((e) => console.log(e));
+      const expense = document.getElementById(`${id}`);
+      expense.parentNode.removeChild(expense);
+    }
+    function update_expense(id) {
+      axios
+        .get(`${api}/${id}`)
+        .then((res) => {
+          show_expense([res.data]);
+        })
+        .catch((e) => console.log(e));
+      update_item_id = null;
+    }
+
+    function delete_expense(id) {
+      console.log("etee");
+      axios.delete(`${api}/${id}`);
+      const expense = document.getElementById(`${id}`);
+      expense.parentNode.removeChild(expense);
+    }
+  </script>
+</html>
